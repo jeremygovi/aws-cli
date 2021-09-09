@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+from datetime import datetime
+import sys, os
+import boto3
+import paramiko
+
+PRIVATE_SSH_KEY = os.environ['PRIVATE_SSH_KEY']
+FILTER_TAG_NAME = os.environ['FILTER_TAG_NAME']
+FILTER_TAG_VALUE = os.environ['FILTER_TAG_VALUE']
+
+if len(sys.argv) <= 1:
+    print('You should provide a command to execute, no?')
+    exit(1)
+CMD = sys.argv[1]
+
+
+ec2 = boto3.resource('ec2')
+
+instances = ec2.instances.filter(
+    Filters=[{'Name': 'tag:'+FILTER_TAG_NAME, 'Values': [FILTER_TAG_VALUE]}])
+for instance in instances:
+    try:
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        privkey = paramiko.RSAKey.from_private_key_file(PRIVATE_SSH_KEY)
+        ssh.connect(instance.public_dns_name,username='ec2-user',pkey=privkey)
+        stdin,stdout, stderr = ssh.exec_command(CMD)
+        data = stdout.read().splitlines()
+        for line in data:
+            x = line.decode()
+            dateTimeObj = datetime.now()
+            print(dateTimeObj, instance.public_dns_name,":",x)
+            ssh.close()
+    except Exception as e:
+        print("Error: {0}".format(e))
