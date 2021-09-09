@@ -17,7 +17,11 @@ CMD = sys.argv[1]
 ec2 = boto3.resource('ec2')
 
 instances = ec2.instances.filter(
-    Filters=[{'Name': 'tag:'+FILTER_TAG_NAME, 'Values': [FILTER_TAG_VALUE]}])
+    Filters=[
+        {'Name': 'tag:'+FILTER_TAG_NAME, 'Values': [FILTER_TAG_VALUE]},
+        {'Name': 'instance-state-name', 'Values': ['running']}
+    ]
+)
 for instance in instances:
     try:
         ssh = paramiko.SSHClient()
