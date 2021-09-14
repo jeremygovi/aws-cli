@@ -1,0 +1,11 @@
+name: test
+on: push
+jobs:
+  display_infos:
+    name: display some info
+    runs-on: ubuntu-latest
+    steps:
+      - name: node version
+        run: node --version
+      - name: yarn version
+        run: yarn version
